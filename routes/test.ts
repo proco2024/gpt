@@ -1,0 +1,3 @@
+import {Hono} from "hono";import type {Env} from "../types";import {ensureDevUser} from "../db/schema";import {getQuota} from "../services/quota";
+export const testRoutes=new Hono<{Bindings:Env}>();
+testRoutes.post("/bootstrap",async c=>{const b=await c.req.json<any>().catch(()=>({}));const d=await ensureDevUser(c.env.DB);const installationId=typeof b.installation_id==="string"&&b.installation_id.trim()?b.installation_id.trim():"inst_test";await c.env.DB.prepare("INSERT OR IGNORE INTO installations(id,user_id,site_url) VALUES(?,?,?)").bind(installationId,d.userId,typeof b.site_url==="string"?b.site_url:"http://localhost/mrk-test").run();return c.json({success:true,data:{user_id:d.userId,installation_id:installationId,quota:await getQuota(c.env.DB,d.userId)}});});
